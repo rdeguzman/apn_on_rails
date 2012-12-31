@@ -46,9 +46,18 @@ attr_accessible :apn_dev_cert, :apn_prod_cert
         APN::Connection.open_for_delivery({:cert => the_cert}) do |conn, sock|
           APN::Device.find_each(:conditions => conditions) do |dev|
             dev.unsent_notifications.each do |noty|
-              conn.write(noty.message_for_sending)
-              noty.sent_at = Time.now
-              noty.save
+              begin
+                result = conn.write(noty.message_for_sending)
+                unless result.nil?
+                  noty.sent_at = Time.now
+                  noty.save
+                else
+                  raise Error, "Connection error for notification #{noty.id}"
+                end
+                result = nil
+              rescue
+
+              end
             end
           end
         end
