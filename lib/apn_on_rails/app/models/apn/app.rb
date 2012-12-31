@@ -44,6 +44,7 @@ attr_accessible :apn_dev_cert, :apn_prod_cert
       end
       begin
         APN::Connection.open_for_delivery({:cert => the_cert}) do |conn, sock|
+          puts "Connected to APN on #{Rails.env}"
           APN::Device.find_each(:conditions => conditions) do |dev|
             dev.unsent_notifications.each do |noty|
               begin
@@ -51,7 +52,9 @@ attr_accessible :apn_dev_cert, :apn_prod_cert
                 unless result.nil?
                   noty.sent_at = Time.now
                   noty.save
+                  puts "Notification #{noty.id} for #{dev.id}:#{dev.token}"
                 else
+                  puts "Connection error  #{noty.id} for #{dev.id}:#{dev.token}"
                   raise Error, "Connection error for notification #{noty.id}"
                 end
                 result = nil
